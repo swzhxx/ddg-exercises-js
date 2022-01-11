@@ -199,8 +199,11 @@ class SimplicialComplexOperators {
    */
   link(subset) {
     // TODO
-
-    return subset // placeholder
+    let temp = MeshSubset.deepCopy(subset)
+    let cloOfStar = this.closure(this.star(temp))
+    let starOfCol = this.star(this.closure(subset))
+    cloOfStar.deleteSubset(starOfCol)
+    return cloOfStar // placeholder
   }
 
   /** Returns true if the given subset is a subcomplex and false otherwise.
