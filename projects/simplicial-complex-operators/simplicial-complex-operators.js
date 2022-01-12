@@ -213,6 +213,17 @@ class SimplicialComplexOperators {
    */
   isComplex(subset) {
     // TODO
+    let temp = MeshSubset.deepCopy(subset)
+    let closed = this.closure(temp)
+    closed.deleteSubset(subset)
+    if (
+      closed.vertices.size == 0 &&
+      closed.edges.size == 0 &&
+      closed.faces.size == 0
+    ) {
+      return true
+    }
+    return false
   }
 
   /** Returns the degree if the given subset is a pure subcomplex and -1 otherwise.
@@ -222,6 +233,42 @@ class SimplicialComplexOperators {
    */
   isPureComplex(subset) {
     // TODO
+    if (this.isComplex(subset)) {
+      if (subset.faces.size > 0) {
+        let temp = MeshSubset.deepCopy(subset)
+        temp.deleteVertices(subset.vertices)
+        temp.deleteEdges(subset.edges)
+        let closed = this.closure(temp)
+        temp.deleteSubset(closed)
+        if (
+          temp.vertices.size == 0 &&
+          temp.edges.size == 0 &&
+          temp.faces.size == 0
+        ) {
+          return 2
+        } else {
+          return -1
+        }
+      } else if (subset.edges.size > 0) {
+        let temp = MeshSubset.deepCopy(subset)
+        temp.deleteVertices(subset.vertices)
+        let closed = this.closure(temp)
+        temp.deleteSubset(closed)
+        if (
+          temp.vertices.size == 0 &&
+          temp.edges.size == 0 &&
+          temp.faces.size == 0
+        ) {
+          return 1
+        } else {
+          return -1
+        }
+      } else {
+        return 0
+      }
+    } else {
+      return -1
+    }
   }
 
   /** Returns the boundary of a subset.
@@ -230,8 +277,28 @@ class SimplicialComplexOperators {
    * @returns {module:Core.MeshSubset} The boundary of the given pure subcomplex.
    */
   boundary(subset) {
-    // TODO
-
+    if (subset.faces.size > 0) {
+      let fs = this.buildFaceVector(subset)
+      let inEdges = this.A1.transpose().timesDense(fs)
+      for (let i = 0; i < inEdges.nRows(); i++) {
+        if (inEdges.get(i, 0) > 1) {
+          subset.deleteEdge(i)
+        }
+      }
+      subset.deleteFaces(subset.faces)
+    } else if (subset.edges.size > 0) {
+      let es = this.buildEdgeVector(subset)
+      let inVertices = this.A0.transpose().timesDense(es)
+      for (let i = 0; i < inVertices.nRows(); i++) {
+        if (inVertices.get(i, 0) > 1) {
+          subset.deleteVertex(i)
+        }
+      }
+      subset.deleteEdges(subset.edges)
+    } else {
+      subset.deleteVertices(subset.vertices)
+    }
+    this.closure(subset)
     return subset // placeholder
   }
 }
